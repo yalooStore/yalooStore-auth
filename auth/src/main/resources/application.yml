@@ -1,0 +1,13 @@
+server:
+  port: 8083
+
+
+yalooStore:
+  front: localhost:8082
+  shop: localhost:8081
+
+application:
+  name: yalooStore-auth
+
+jwt:
+  secretKey:
