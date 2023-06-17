@@ -2,71 +2,61 @@ package com.yaloostore.auth.config;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.BeanClassLoaderAware;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
-import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
-/**
- * Redis 설정 클래스
- * (따로 관리하는 이유는 인증관련 서버를 따로 두었어야 하는데 shop에 한 번에 두고 사용하기 때문에 나중 작업을 위해서 따로 뺴둠)
- * */
-
-@EnableRedisHttpSession
 @Configuration
-public class RedisConfig implements BeanClassLoaderAware {
+@Getter
+public class RedisConfig {
 
-
-    @Value("${spring.redis.host}")
+    @Value("${spring.data.redis.host}")
     private String host;
-    @Value("${spring.redis.port}")
-    private int port;
-    @Value("${spring.redis.password}")
-    private String password;
 
-    @Value("${spring.redis.database}")
+    @Value("${spring.data.redis.port}")
+    private int port;
+
+    @Value("${spring.data.redis.database}")
     private int database;
 
-    private ClassLoader classLoader;
+    @Value("${spring.data.redis.password}")
+    private String  password;
 
 
     /**
-     * Redis 연결과 관련된 빈 설정입니다.
+     * redis 관련 설정을 한 클래스입니다.
      * */
     @Bean
     public RedisConnectionFactory redisConnectionFactory(){
-
-        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
+        RedisStandaloneConfiguration configuration= new RedisStandaloneConfiguration();
         configuration.setHostName(host);
         configuration.setPort(port);
-        configuration.setPassword(password);
         configuration.setDatabase(database);
+        configuration.setPassword(password);
 
         return new LettuceConnectionFactory(configuration);
     }
 
+
+
     /**
-     * redisTemplate 사용 시
+     * redis 사용 시 해당 연산을 처리할 때 해당 설정을 사용해서 할 수 있도록 설정한 클래스입니다.
      * */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate() {
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<String, Object> redisTemplate(){
+        RedisTemplate<String , Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
-
-        //jdk 직렬화 방식을 사용하기 때문에 직접 데이터를 볼 떄 알아볼 수 없는 경우를 대비해서 개발자가 읽을 수 있는 형태로 출력하기 위해서 설정을 추가.
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
@@ -80,16 +70,12 @@ public class RedisConfig implements BeanClassLoaderAware {
 
     private ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModules(SecurityJackson2Modules.getModules(classLoader));
-
+        ClassLoader loader =getClass().getClassLoader();
+        objectMapper.registerModules(SecurityJackson2Modules.getModules(loader));
         return objectMapper;
     }
 
 
 
-    @Override
-    public void setBeanClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
 
-    }
 }

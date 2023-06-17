@@ -11,3 +11,12 @@ application:
 
 jwt:
   secretKey:
+
+spring:
+  data:
+    redis:
+      password:
+      database:
+      host: localhost
+      port: 6379
+

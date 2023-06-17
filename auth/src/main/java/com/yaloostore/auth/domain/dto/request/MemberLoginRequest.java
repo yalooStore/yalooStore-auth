@@ -1,5 +1,4 @@
-package com.yaloostore.auth.dto.request;
-
+package com.yaloostore.auth.domain.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,9 +7,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class LogoutRequest {
+public class MemberLoginRequest {
 
-    private String key;
-
+    private String loginId;
+    private String password;
 
 }
