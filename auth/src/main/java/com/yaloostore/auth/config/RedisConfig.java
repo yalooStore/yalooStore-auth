@@ -3,6 +3,7 @@ package com.yaloostore.auth.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +19,7 @@ import org.springframework.security.jackson2.SecurityJackson2Modules;
 
 @Configuration
 @Getter
-public class RedisConfig {
+public class RedisConfig implements BeanClassLoaderAware {
 
     @Value("${spring.data.redis.host}")
     private String host;
@@ -32,6 +33,7 @@ public class RedisConfig {
     @Value("${spring.data.redis.password}")
     private String  password;
 
+    private ClassLoader classLoader;
 
     /**
      * redis 관련 설정을 한 클래스입니다.
@@ -68,14 +70,18 @@ public class RedisConfig {
         return new GenericJackson2JsonRedisSerializer(objectMapper());
     }
 
+
     private ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        ClassLoader loader =getClass().getClassLoader();
-        objectMapper.registerModules(SecurityJackson2Modules.getModules(loader));
+        objectMapper.registerModules(SecurityJackson2Modules.getModules(classLoader));
+
         return objectMapper;
     }
 
-
+    @Override
+    public void setBeanClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
+    }
 
 
 }

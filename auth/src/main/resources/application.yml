@@ -5,6 +5,8 @@ server:
 yalooStore:
   front: localhost:8082
   shop: localhost:8081
+  gateway: localhost:80
+
 
 application:
   name: yalooStore-auth
@@ -16,7 +18,8 @@ spring:
   data:
     redis:
       password:
-      database:
+      database: 0
       host: localhost
       port: 6379
-
+  config:
+    import: "optional:configserver:"
