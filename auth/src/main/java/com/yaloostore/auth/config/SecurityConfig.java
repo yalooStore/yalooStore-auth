@@ -64,6 +64,7 @@ public class SecurityConfig {
         JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(authenticationManager(null),
                 jwtProvider, redisTemplate);
         jwtAuthenticationFilter.setAuthenticationFailureHandler(jwtFailureHandler());
+        jwtAuthenticationFilter.setFilterProcessesUrl("/auth/login");
         //failureHandler 등록하기
         return jwtAuthenticationFilter;
     }
