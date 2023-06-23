@@ -19,7 +19,7 @@ spring:
     redis:
       password:
       database: 0
-      host: localhost
+      host: http://localhost
       port: 6379
   config:
     import: "optional:configserver:"

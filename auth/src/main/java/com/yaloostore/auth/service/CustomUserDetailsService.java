@@ -18,6 +18,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,8 +43,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         HttpHeaders headers = new HttpHeaders();
         HttpEntity httpEntity = new HttpEntity(headers);
 
+
+        UriComponents uri = UriComponentsBuilder.fromHttpUrl(serverMetaDataConfig.getShopUrl()+"/api/service/members/login/"+loginId).build();
+
         ResponseEntity<ResponseDto<MemberLoginResponse>> memberLoginResponse = restTemplate
-                .exchange(serverMetaDataConfig.getShopUrl() + "/api/service/login"+loginId,
+                .exchange(uri.toUri(),
                         HttpMethod.GET,
                         httpEntity,
                         new ParameterizedTypeReference<ResponseDto<MemberLoginResponse>>() {
