@@ -1,4 +1,4 @@
-package com.yaloostore.auth.service;
+package com.yaloostore.auth.service.impl;
 
 import com.yalooStore.common_utils.code.ErrorCode;
 import com.yalooStore.common_utils.dto.ResponseDto;

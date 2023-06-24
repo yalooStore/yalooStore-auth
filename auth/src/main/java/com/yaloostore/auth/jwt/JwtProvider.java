@@ -2,6 +2,7 @@ package com.yaloostore.auth.jwt;
 
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -80,4 +81,24 @@ public class JwtProvider {
                 .getExpiration();
     }
 
+
+    public boolean isValidToken(String token){
+        try {
+            Jws<Claims> claimsJws = Jwts.parserBuilder()
+                    .setSigningKey(getSecretKey())
+                    .build()
+                    .parseClaimsJws(token);
+        }catch (Exception e){
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 엑세스 토큰을 재발급해줍니다.
+     * */
+    public String reissueToken(String loginId, List<String> roles) {
+        String accessToken = createAccessToken(loginId, roles);
+        return accessToken;
+    }
 }

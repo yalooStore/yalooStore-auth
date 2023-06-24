@@ -4,7 +4,7 @@ package com.yaloostore.auth.config;
 import com.yaloostore.auth.filter.JwtAuthenticationFilter;
 import com.yaloostore.auth.handler.JwtFailureHandler;
 import com.yaloostore.auth.provider.JwtAuthenticationProvider;
-import com.yaloostore.auth.service.CustomUserDetailsService;
+import com.yaloostore.auth.service.impl.CustomUserDetailsService;
 import com.yaloostore.auth.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
