@@ -113,6 +113,9 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         response.addHeader(HEADER_UUID.getValue(), memberUuid);
         response.addHeader(HEADER_EXPIRED_TIME.getValue(), expiredTime.toString());
 
+        //TODO: 로그인 성공시 member_login_history에 해당 회원정보를 save해주기
+        
+
     }
 
 
