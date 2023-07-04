@@ -39,12 +39,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
-
         HttpHeaders headers = new HttpHeaders();
         HttpEntity httpEntity = new HttpEntity(headers);
 
-
-        UriComponents uri = UriComponentsBuilder.fromHttpUrl(serverMetaDataConfig.getShopUrl()+"/api/service/members/login/"+loginId).build();
+        UriComponents uri = UriComponentsBuilder.fromHttpUrl(serverMetaDataConfig
+                .getShopUrl()).pathSegment("api", "service", "members", "login", loginId).build();
 
         ResponseEntity<ResponseDto<MemberLoginResponse>> memberLoginResponse = restTemplate
                 .exchange(uri.toUri(),
@@ -53,8 +52,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                         new ParameterizedTypeReference<ResponseDto<MemberLoginResponse>>() {
                 });
 
-
-        //해당하는 로그인 아이디를 가진 회원이 없으면 에러 던짐
         MemberLoginResponse data = memberLoginResponse.getBody().getData();
         if (Objects.isNull(data)){
             throw new ClientException(ErrorCode.MEMBER_NOT_FOUND,"not found member");
@@ -73,6 +70,5 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return authorities;
     }
-
 
 }

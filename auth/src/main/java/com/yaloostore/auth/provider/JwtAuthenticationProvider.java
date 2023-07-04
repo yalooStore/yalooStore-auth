@@ -29,6 +29,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         if(Objects.isNull(user)){
             throw new ClientException(ErrorCode.MEMBER_NOT_FOUND,"member is not found");
         } else if (!this.passwordEncoder.matches(password, user.getPassword())){
+
             throw new ClientException(ErrorCode.NOT_FOUND, "password is not match");
         }
 

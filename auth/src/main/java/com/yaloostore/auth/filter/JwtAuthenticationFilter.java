@@ -6,6 +6,8 @@ import com.yalooStore.common_utils.exception.ClientException;
 import com.yaloostore.auth.domain.dto.request.MemberLoginRequest;
 import com.yaloostore.auth.exception.InvalidLoginRequestException;
 import com.yaloostore.auth.jwt.JwtProvider;
+import com.yaloostore.auth.member.dto.MemberLoginHistoryResponse;
+import com.yaloostore.auth.member.service.inter.MemberLoginHistoryService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -32,8 +35,8 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     private final AuthenticationManager authenticationManager;
 
-    private static final String LOGIN_ID_PARAMETER = "loginId";
-    private static final String PASSWORD_PARAMETER = "password";
+    private final MemberLoginHistoryService memberLoginHistoryService;
+
 
     private static final AntPathRequestMatcher DEFAULT_FORM_LOGIN_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/login", "POST");
 
@@ -45,9 +48,10 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private static final String BEARER_PREFIX = "Bearer ";
 
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManage, JwtProvider jwtProvider, RedisTemplate<String, Object> redisTemplate) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManage, MemberLoginHistoryService memberLoginHistoryService, JwtProvider jwtProvider, RedisTemplate<String, Object> redisTemplate) {
         super(DEFAULT_FORM_LOGIN_REQUEST_MATCHER);
         this.authenticationManager = authenticationManage;
+        this.memberLoginHistoryService = memberLoginHistoryService;
 
         this.jwtProvider = jwtProvider;
         this.redisTemplate = redisTemplate;
@@ -66,7 +70,6 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         ObjectMapper objectMapper =new ObjectMapper();
 
         MemberLoginRequest memberLoginRequest;
-
 
         try {
             memberLoginRequest = objectMapper.readValue(request.getInputStream(), MemberLoginRequest.class);
@@ -97,6 +100,10 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         String loginId = auth.getName();
         List<String> authorities = getAuthorities(auth.getAuthorities());
 
+        //로그인 성공했으니까 해당 아이디를 가지고 로그인 기록을 남기기
+        MemberLoginHistoryResponse memberLoginHistoryResponse = memberLoginHistoryService.saveLoginHistory(loginId);
+        log.info("login history put date time? : {}", memberLoginHistoryResponse.getLoginTime());
+
         String accessToken = jwtProvider.createAccessToken(loginId, authorities);
         String refreshToken = jwtProvider.createRefreshToken(loginId, authorities);
         Date expiredTime = jwtProvider.extractExpiredTime(accessToken);
@@ -113,11 +120,7 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         response.addHeader(HEADER_UUID.getValue(), memberUuid);
         response.addHeader(HEADER_EXPIRED_TIME.getValue(), expiredTime.toString());
 
-        //TODO: 로그인 성공시 member_login_history에 해당 회원정보를 save해주기
-        
-
     }
-
 
     private List<String> getAuthorities(Collection<? extends GrantedAuthority> authorities){
         return authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
