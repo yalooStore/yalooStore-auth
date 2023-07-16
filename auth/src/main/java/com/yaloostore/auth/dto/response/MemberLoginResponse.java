@@ -1,4 +1,4 @@
-package com.yaloostore.auth.domain.dto.response;
+package com.yaloostore.auth.dto.response;
 
 
 import lombok.AllArgsConstructor;

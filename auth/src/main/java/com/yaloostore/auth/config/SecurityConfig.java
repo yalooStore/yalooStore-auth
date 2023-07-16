@@ -4,7 +4,6 @@ package com.yaloostore.auth.config;
 import com.yaloostore.auth.filter.JwtAuthenticationFilter;
 import com.yaloostore.auth.handler.JwtFailureHandler;
 import com.yaloostore.auth.member.service.inter.MemberLoginHistoryService;
-import com.yaloostore.auth.provider.JwtAuthenticationProvider;
 import com.yaloostore.auth.service.impl.CustomUserDetailsService;
 import com.yaloostore.auth.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -44,22 +43,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http.authorizeHttpRequests().anyRequest().permitAll();
+        http.authorizeRequests().anyRequest().permitAll();
         http.formLogin().disable();
         http.logout().disable();
         http.csrf().disable();
-        http.cors().disable();
+        http.addFilter(jwtAuthenticationFilter());
 
-        //jwt 발급관련 필터체인 등록
-        http.addFilterAt(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-        http.headers().frameOptions().sameOrigin();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.headers().frameOptions().sameOrigin();
 
         return http.build();
 
-
     }
-
 
     private AbstractAuthenticationProcessingFilter jwtAuthenticationFilter() throws Exception {
 
@@ -73,27 +68,13 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationFailureHandler jwtFailureHandler() {
-        return new JwtFailureHandler(restTemplate, serverMetaDataConfig);
+        return new JwtFailureHandler(serverMetaDataConfig);
     }
 
-//    @Bean
-//    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-//        AuthenticationManagerBuilder authenticationManager =
-//                http.getSharedObject(AuthenticationManagerBuilder.class);
-//        authenticationManager.authenticationProvider(jwtAuthenticationProvider());
-//
-//        return authenticationManager.build();
-//
-//    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
-    }
-    @Bean
-    public AuthenticationProvider jwtAuthenticationProvider() {
-        return new JwtAuthenticationProvider(customUserDetailsService,
-                bCryptPasswordEncoder());
     }
 
 

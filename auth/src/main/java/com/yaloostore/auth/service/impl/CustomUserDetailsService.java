@@ -1,13 +1,11 @@
 package com.yaloostore.auth.service.impl;
 
-import com.yalooStore.common_utils.code.ErrorCode;
 import com.yalooStore.common_utils.dto.ResponseDto;
-import com.yalooStore.common_utils.exception.ClientException;
 import com.yaloostore.auth.config.ServerMetaDataConfig;
-import com.yaloostore.auth.domain.dto.response.MemberLoginResponse;
+import com.yaloostore.auth.dto.response.MemberLoginResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,21 +13,19 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -45,21 +41,20 @@ public class CustomUserDetailsService implements UserDetailsService {
         UriComponents uri = UriComponentsBuilder.fromHttpUrl(serverMetaDataConfig
                 .getShopUrl()).pathSegment("api", "service", "members", "login", loginId).build();
 
-        ResponseEntity<ResponseDto<MemberLoginResponse>> memberLoginResponse = restTemplate
-                .exchange(uri.toUri(),
-                        HttpMethod.GET,
-                        httpEntity,
-                        new ParameterizedTypeReference<ResponseDto<MemberLoginResponse>>() {
-                });
+        try {
+            ResponseEntity<ResponseDto<MemberLoginResponse>> memberLoginResponse = restTemplate
+                    .exchange(uri.toUri(),
+                            HttpMethod.GET,
+                            httpEntity,
+                            new ParameterizedTypeReference<>() {
+                            });
+            MemberLoginResponse data = memberLoginResponse.getBody().getData();
+            User user = new User(data.getLoginId(), data.getPassword(), getAuthorities(data));
+            return user;
 
-        MemberLoginResponse data = memberLoginResponse.getBody().getData();
-        if (Objects.isNull(data)){
-            throw new ClientException(ErrorCode.MEMBER_NOT_FOUND,"not found member");
+        } catch (HttpClientErrorException e){
+            throw new UsernameNotFoundException("not found username");
         }
-
-        User user = new User(data.getLoginId(), data.getPassword(), getAuthorities(data));
-
-        return user;
     }
 
     private List<? extends GrantedAuthority> getAuthorities(MemberLoginResponse data) {

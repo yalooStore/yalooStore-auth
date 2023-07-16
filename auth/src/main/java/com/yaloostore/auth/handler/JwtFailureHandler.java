@@ -18,13 +18,12 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtFailureHandler implements AuthenticationFailureHandler {
 
-    private final RestTemplate restTemplate;
     private final ServerMetaDataConfig serverMetaDataConfig;
 
 
     @Override
-    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+                                        AuthenticationException exception) throws IOException {
         response.sendRedirect(serverMetaDataConfig.getFrontUrl() + "/members/login");
     }
 }

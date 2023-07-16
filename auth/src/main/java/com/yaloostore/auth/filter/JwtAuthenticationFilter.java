@@ -3,7 +3,7 @@ package com.yaloostore.auth.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yalooStore.common_utils.code.ErrorCode;
 import com.yalooStore.common_utils.exception.ClientException;
-import com.yaloostore.auth.domain.dto.request.MemberLoginRequest;
+import com.yaloostore.auth.dto.request.MemberLoginRequest;
 import com.yaloostore.auth.exception.InvalidLoginRequestException;
 import com.yaloostore.auth.jwt.JwtProvider;
 import com.yaloostore.auth.member.dto.MemberLoginHistoryResponse;
@@ -19,8 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.io.IOException;
@@ -31,7 +30,7 @@ import static com.yaloostore.auth.utils.AuthUtil.*;
 
 
 @Slf4j
-public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
 
@@ -49,7 +48,6 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManage, MemberLoginHistoryService memberLoginHistoryService, JwtProvider jwtProvider, RedisTemplate<String, Object> redisTemplate) {
-        super(DEFAULT_FORM_LOGIN_REQUEST_MATCHER);
         this.authenticationManager = authenticationManage;
         this.memberLoginHistoryService = memberLoginHistoryService;
 
@@ -64,7 +62,7 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
      * front -> request(loginId, password) -> authentication생성 -> authenticationManager로 위임
      * */
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
 
         log.info("================ auth server get HttpServletRequest start ================");
         ObjectMapper objectMapper =new ObjectMapper();
@@ -73,6 +71,7 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
         try {
             memberLoginRequest = objectMapper.readValue(request.getInputStream(), MemberLoginRequest.class);
+            log.info("Auth sever  ======  Attempt authentication");
         } catch (IOException e){
             throw new InvalidLoginRequestException();
         }
@@ -93,6 +92,7 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                             FilterChain chain, Authentication auth) throws IOException, ServletException {
 
+        log.info("auth server ========== successful authentication");
 
         if (Objects.isNull(auth)){
             throw new ClientException(ErrorCode.MEMBER_NOT_FOUND, "member is not found");
@@ -116,15 +116,22 @@ public class JwtAuthenticationFilter extends AbstractAuthenticationProcessingFil
         redisTemplate.opsForHash().put(memberUuid, PRINCIPAL.getValue(),auth.getAuthorities().toString());
 
 
-        response.addHeader(AUTHORIZATION_HEADER, BEARER_PREFIX+accessToken);
+        response.addHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + accessToken);
         response.addHeader(HEADER_UUID.getValue(), memberUuid);
         response.addHeader(HEADER_EXPIRED_TIME.getValue(), expiredTime.toString());
 
     }
 
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        log.info("failed : {}", failed.toString());
+        super.unsuccessfulAuthentication(request, response, failed);
+    }
+
     private List<String> getAuthorities(Collection<? extends GrantedAuthority> authorities){
         return authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
     }
+
 
 
 }

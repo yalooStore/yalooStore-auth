@@ -1,12 +1,18 @@
 package com.yaloostore.auth.jwt;
 
 
+import com.yaloostore.auth.service.impl.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -20,11 +26,13 @@ import java.util.List;
  * 발행, 재발행 등의 작업을 진행하고 해당 Jwt를 사용해 Jwt 정보를 돌려주는 기능을 합니다.
  * */
 @Component
+@RequiredArgsConstructor
 public class JwtProvider {
 
     private static final long ACCESS_TOKEN_EXPIRED_TIME = 1000L * 60 * 60; // 1시간
     private static final long REFRESH_TOKEN_EXPIRED_TIME = 1000L * 60L * 60L * 24L * 7L; // 7일
 
+    private final UserDetailsService userDetailsService;
 
     @Value("${jwt.secretKey}")
     private String jwtSecretKey;
@@ -100,5 +108,14 @@ public class JwtProvider {
     public String reissueToken(String loginId, List<String> roles) {
         String accessToken = createAccessToken(loginId, roles);
         return accessToken;
+    }
+
+    public Authentication getAuthentication(String token){
+        UserDetails userDetails = userDetailsService.loadUserByUsername(extractLoginId(token));
+        return new UsernamePasswordAuthenticationToken(
+                userDetails,
+                "",
+                userDetails.getAuthorities()
+        );
     }
 }
