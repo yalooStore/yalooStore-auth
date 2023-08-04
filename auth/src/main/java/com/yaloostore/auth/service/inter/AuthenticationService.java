@@ -23,7 +23,7 @@ public interface AuthenticationService {
      * @param uuid 해당 회원의 고유 uuid
      * @return 회원 권한
      * */
-    String getPrincipal(String uuid);
+    String getRoles(String uuid);
 
 
     /**

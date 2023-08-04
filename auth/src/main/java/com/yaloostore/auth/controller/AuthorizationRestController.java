@@ -19,16 +19,16 @@ public class AuthorizationRestController {
     private static final String BEARER_PREFIX = "Bearer ";
     private final AuthorizationService authorizationService;
 
+
     @GetMapping(headers = "Authorization")
-    public ResponseDto<AuthorizationResponseDto> authorization(@RequestHeader(name = "Authorization") String authorization){
-
-
-        AuthorizationResponseDto authorizationResponseDto = authorizationService.authorization(removeBearerPrefix(authorization));
+    public ResponseDto<AuthorizationResponseDto> authorization(@RequestHeader(name = "Authorization") String authorization) {
+        AuthorizationResponseDto authorizationMeta = authorizationService.authorization(
+                removeBearerPrefix(authorization));
 
         return ResponseDto.<AuthorizationResponseDto>builder()
                 .success(true)
                 .status(HttpStatus.OK)
-                .data(authorizationResponseDto)
+                .data(authorizationMeta)
                 .build();
     }
 
@@ -37,7 +37,6 @@ public class AuthorizationRestController {
         if(!authorization.startsWith(BEARER_PREFIX)){
             throw new InvalidTokenException();
         }
-
         return authorization.substring(BEARER_PREFIX.length());
     }
 

@@ -24,12 +24,11 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService customUserDetailsService;
     private final JwtProvider jwtProvider;
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -62,7 +61,6 @@ public class SecurityConfig {
                 memberLoginHistoryService, jwtProvider, redisTemplate);
         jwtAuthenticationFilter.setAuthenticationFailureHandler(jwtFailureHandler());
         jwtAuthenticationFilter.setFilterProcessesUrl("/auth/login");
-        //failureHandler 등록하기
         return jwtAuthenticationFilter;
     }
 

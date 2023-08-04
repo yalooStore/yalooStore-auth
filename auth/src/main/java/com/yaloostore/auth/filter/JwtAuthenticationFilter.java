@@ -13,6 +13,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -118,7 +120,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         response.addHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + accessToken);
         response.addHeader(HEADER_UUID.getValue(), memberUuid);
-        response.addHeader(HEADER_EXPIRED_TIME.getValue(), expiredTime.toString());
+        response.addHeader(HEADER_EXPIRED_TIME.getValue(), String.valueOf(expiredTime));
+
+        log.info("===================== auth server header verify =======================");
+        Logger logger = LoggerFactory.getLogger(getClass());
+        logger.info("Response Headers: {}", response.getHeaderNames());
 
     }
 

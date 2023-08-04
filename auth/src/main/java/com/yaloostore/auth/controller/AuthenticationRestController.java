@@ -39,6 +39,7 @@ public class AuthenticationRestController {
     public ResponseDto<Void> tokenReissue(HttpServletRequest request, HttpServletResponse response){
         String accessToken = request.getHeader(AUTHORIZATION);
         String uuid = request.getHeader(HEADER_UUID.getValue());
+
         if(isValidHeader(accessToken,uuid)){
             throw new InvalidAuthorizationHeaderException();
         }
@@ -60,17 +61,16 @@ public class AuthenticationRestController {
         }
 
         String loginId = authenticationService.getLoginId(uuid);
-        String principal = authenticationService.getPrincipal(uuid);
+        String role = authenticationService.getRoles(uuid);
 
-        log.info("roles : {}", principal);
+        List<String> roles = extractMemberRoles(role);
 
-        List<String> roles = extractMemberRoles(principal);
         String reissueToken = jwtProvider.reissueToken(loginId, roles);
         authenticationService.doReissue(uuid, reissueToken);
 
         long expiredTime = jwtProvider.extractExpiredTime(reissueToken).getTime();
 
-        response.addHeader(AUTHORIZATION, reissueToken);
+        response.addHeader(AUTHORIZATION, "Bearer" + reissueToken);
         response.addHeader(HEADER_UUID.getValue(), uuid);
         response.addHeader(HEADER_EXPIRED_TIME.getValue(), String.valueOf(expiredTime));
 
@@ -79,27 +79,14 @@ public class AuthenticationRestController {
                 .status(HttpStatus.OK)
                 .build();
 
-
-    }
-
-    private List<String> extractMemberRoles(String principal) {
-        return Arrays.asList(principal.replaceAll("[\\[\\]]", "").split(", "));
-    }
-
-    private boolean isValidRefreshToken(String uuid) {
-
-        String refreshToken= Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, REFRESH_TOKEN.getValue())).toString();
-
-        long expiredTime = jwtProvider.extractExpiredTime(refreshToken).getDate();
-        long now = new Date().getTime();
-
-        return (expiredTime - (now/1000)) > 0;
     }
 
 
-    private boolean isValidHeader(String accessToken, String uuid) {
-        return Objects.isNull(accessToken) || Objects.isNull(uuid) || !accessToken.startsWith("Bearer ") || jwtProvider.isValidToken(accessToken);
-
+    /**
+     * 레디스에 모든 회원 권한이 String으로 저장된 형태를 ArrayList로 변환해서 돌려주기 위해서 사용하는 메소드입니다.
+     * */
+    private List<String> extractMemberRoles(String role) {
+        return Arrays.asList(role.replaceAll("[\\[\\]]", "").split(", "));
     }
 
     /**
@@ -108,5 +95,24 @@ public class AuthenticationRestController {
      * */
     private boolean isNotValidKey(String uuid) {
         return redisTemplate.opsForHash().keys(uuid).isEmpty();
+    }
+
+    /**
+     * 토큰 재발급에 사용되는 토큰이 만료시간이 넘지 않은 경우라면 재발급 합니다.
+     * */
+    private boolean isValidRefreshToken(String uuid) {
+
+        String refreshToken= Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, REFRESH_TOKEN.getValue())).toString();
+
+        long expiredTime = jwtProvider.extractExpiredTime(refreshToken).getTime();
+        long now = new Date().getTime();
+
+        return (expiredTime - (now/1000)) > 0;
+    }
+
+
+    private boolean isValidHeader(String accessToken, String uuid) {
+        return Objects.isNull(accessToken) || Objects.isNull(uuid)
+                || !accessToken.startsWith("Bearer ") || !jwtProvider.isValidToken(accessToken.substring(7));
     }
 }

@@ -1,15 +1,13 @@
 package com.yaloostore.auth.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
-@AllArgsConstructor
+@Setter
+@ToString
 @NoArgsConstructor
+@AllArgsConstructor
 public class MemberLoginRequest {
-
     private String loginId;
     private String password;
-
 }

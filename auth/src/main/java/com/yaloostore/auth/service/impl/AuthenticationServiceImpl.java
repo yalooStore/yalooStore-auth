@@ -32,7 +32,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public String getPrincipal(String uuid) {
+    public String getRoles(String uuid) {
         return Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, PRINCIPAL.getValue()).toString());
     }
 
@@ -58,7 +58,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         redisTemplate.opsForHash().delete(uuid, REFRESH_TOKEN.getValue());
         redisTemplate.opsForHash().delete(uuid, LOGIN_ID.getValue());
         redisTemplate.opsForHash().delete(uuid, PRINCIPAL.getValue());
-
 
     }
 }
