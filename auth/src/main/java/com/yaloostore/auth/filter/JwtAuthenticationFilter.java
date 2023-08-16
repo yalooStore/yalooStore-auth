@@ -13,8 +13,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -102,6 +100,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String loginId = auth.getName();
         List<String> authorities = getAuthorities(auth.getAuthorities());
 
+        log.info("------------------ authorities = {} ------------------", authorities);
         //로그인 성공했으니까 해당 아이디를 가지고 로그인 기록을 남기기
         MemberLoginHistoryResponse memberLoginHistoryResponse = memberLoginHistoryService.saveLoginHistory(loginId);
         log.info("login history put date time? : {}", memberLoginHistoryResponse.getLoginTime());
@@ -115,16 +114,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         redisTemplate.opsForHash().put(memberUuid, ACCESS_TOKEN.getValue(),accessToken);
         redisTemplate.opsForHash().put(memberUuid, REFRESH_TOKEN.getValue(),refreshToken);
         redisTemplate.opsForHash().put(memberUuid, LOGIN_ID.getValue(),loginId);
-        redisTemplate.opsForHash().put(memberUuid, PRINCIPAL.getValue(),auth.getAuthorities().toString());
+        redisTemplate.opsForHash().put(memberUuid, PRINCIPAL.getValue(), auth.getAuthorities().toString());
 
 
         response.addHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + accessToken);
         response.addHeader(HEADER_UUID.getValue(), memberUuid);
         response.addHeader(HEADER_EXPIRED_TIME.getValue(), String.valueOf(expiredTime));
-
-        log.info("===================== auth server header verify =======================");
-        Logger logger = LoggerFactory.getLogger(getClass());
-        logger.info("Response Headers: {}", response.getHeaderNames());
 
     }
 

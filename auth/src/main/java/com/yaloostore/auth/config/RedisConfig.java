@@ -15,8 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
-
-@EnableRedisHttpSession
+@EnableRedisHttpSession(redisNamespace = "redis:session")
 @Configuration
 public class RedisConfig implements BeanClassLoaderAware {
 
@@ -34,6 +33,7 @@ public class RedisConfig implements BeanClassLoaderAware {
 
     private ClassLoader classLoader;
 
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
@@ -44,7 +44,6 @@ public class RedisConfig implements BeanClassLoaderAware {
 
         return new LettuceConnectionFactory(configuration);
     }
-
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
